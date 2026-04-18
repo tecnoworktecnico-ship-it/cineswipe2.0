@@ -15,8 +15,7 @@
 *No estoy seguro, no encontré ninguno, o no tuve o son muy difíciles de detectar*
 
 ---
-### Resumen Sesión 6 (Refactor y Persistencia)
-
-- **Logro**: Se implementó una arquitectura de hooks desacoplada (Orquestador + Caché + Paginación) ganando un 100% en limpieza de código (SRP).
-- **Infraestructura**: Se conectó el proyecto a Supabase para persistencia remota anónima.
-- **Automatización**: Se creó el sistema de "Skills" para asegurar que la documentación siempre esté al día con el código.
+- **CI/CD**: Implementación de GitHub Actions para validación automática de Lint, Test y Build.
+- **Testing**: Integración de Vitest para pruebas unitarias y configuración de entorno DOM.
+- **Persistencia**: Corrección de políticas RLS en Supabase y refinamiento del trigger de sincronización.
+- **Organización**: Creación del directorio `/skills` y el registro de errores `buglog.md`.

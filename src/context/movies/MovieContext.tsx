@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useEffect, useMemo, useContext } from 'react';
+import React, { createContext, useReducer, useEffect, useMemo, useContext, useRef } from 'react';
 import { TMDBMovie } from '../../types/tmdb.types';
 import { supabase } from '../../lib/supabase';
 
@@ -122,14 +122,14 @@ export const MovieHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [state]);
 
+  const lastSyncedRef = useRef<number>(0);
+
   // Efecto Secundario (Supabase): Sincronizamos con la nube en cada nueva interacción.
   useEffect(() => {
-    const lastItem = state.history[0]; // El historial está ordenado con el más reciente primero
-    if (!lastItem) return;
+    const lastItem = state.history[0]; 
+    if (!lastItem || lastItem.timestamp <= lastSyncedRef.current) return;
 
-    // Evitar re-sincronizar elementos viejos si el efecto se dispara por otras razones
-    const isVeryRecent = Date.now() - lastItem.timestamp < 1000;
-    if (!isVeryRecent) return;
+    lastSyncedRef.current = lastItem.timestamp;
 
     const syncWithSupabase = async () => {
       try {
@@ -157,7 +157,7 @@ export const MovieHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
 
     syncWithSupabase();
-  }, [state.history.length]); // Solo intentamos sincronizar si la longitud del historial cambia (nueva interacción)
+  }, [state.history]); // Sincronizar cada vez que el array de historial cambie (referencia nueva)
 
   // Memoizar el valor del state para proteger componentes hijos de re-renderizados forzados
   const stateContextValue = useMemo(() => state, [state]);
