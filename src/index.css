@@ -2,10 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-surface-950: #030712;
+  --color-surface-800: #1f2937;
+  --color-surface-700: #374151;
+  --color-accent-like: #22c55e;
+  --color-accent-nope: #ef4444;
+  --color-accent-star: #facc15;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-surface-950);
+  color: white;
 }
 
 #root {
