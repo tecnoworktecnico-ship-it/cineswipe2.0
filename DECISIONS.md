@@ -11,7 +11,9 @@ Este documento registra las decisiones técnicas clave (Architecture Decision Re
 | [ADR-003](#adr-003-proveedor-de-datos-tmdb-vs-otras-apis-de-películas) | Origen de Datos | The Movie Database (TMDB) v3 | Gratuitidad generosa, amplia riqueza de metadatos e imágenes, soporte avanzado de paginación e idiomas. |
 | [ADR-004](#adr-004-desarrollo-delegación-a-ia-vs-código-manual) | Workflow de Código | Agente IA (Antigravity) Híbrido | Velocidad de prototipado para componentes pesados y documentación, con el desarrollador como director de orquesta. |
 
-| [ADR-005](#adr-005-optimización-extrema-de-performance-lighthouse-99100) | Performance | Preload HTTP y Hack C++ | Modificaciones fuera de React (pura inyección de Red) para saltar el tiempo de compilación del AST Javascript y alcanzar top latency. |
+| [ADR-005](#adr-005-optimización-extrema-de-performance-lighthouse-100100) | Performance | Preload HTTP y Hack C++ | Modificaciones fuera de React (pura inyección de Red) para saltar el tiempo de compilación del AST Javascript y alcanzar top latency. |
+| [ADR-006](#adr-006-modularización-de-hooks-principales-srp) | Arquitectura | División en Orquestador, Caché y Paginación | Resuelve el acoplamiento de lógica en useMovies y mejora la mantenibilidad mediante SRP. |
+| [ADR-007](#adr-007-integración-de-supabase-para-persistencia-híbrida) | Base de Datos | Supabase con Acceso Anónimo | Permite persistir interacciones (Likes/Dislikes) más allá del localStorage sin requerir un sistema de login inmediato. |
 
 ---
 
@@ -128,6 +130,46 @@ Emplear agresivas técnicas arquitectónicas de pre-carga nativas en la raíz pu
 
 ---
 
+## ADR-006: Modularización de Hooks Principales (SRP)
+
+**Contexto:**
+El hook `useMovies` se había convertido en un monolito que gestionaba simultáneamente: estado de películas, punteros de paginación, lógica de red (fetch), controladores de aborto y persistencia en caché.
+
+**Decisión:**
+Refactorizar el sistema en tres hooks especializados:
+1.  **useTMDBCache**: Gestión pura de `sessionStorage` y TTL.
+2.  **useMoviePagination**: Gestión de listas acumuladas y estado de páginas.
+3.  **useMovies**: Orquestador principal que maneja el ciclo de vida de la petición y la integración de las partes.
+
+**Consecuencias Positivas:**
+*   Cumplimiento del Principio de Responsabilidad Única (SRP).
+*   Código más legible y fácil de debuguear (ej. los errores de caché están aislados).
+*   Facilita la transición a otros proveedores de datos o de almacenamiento sin afectar la lógica de orquestación.
+
+**Consecuencias Negativas:**
+*   Ligero aumento de la complejidad de seguimiento de flujo para desarrolladores junior.
+*   Múltiples re-renders potenciales si los sub-hooks no están perfectamente memorizados.
+
+---
+
+## ADR-007: Integración de Supabase (Persistencia Híbrida)
+
+**Contexto:**
+El historial de usuario (Likes/Dislikes) solo residía en `localStorage`, lo que impedía el análisis de datos o la recuperación del historial en diferentes navegadores/dispositivos.
+
+**Decisión:**
+Implementar una capa de base de datos en **Supabase** instalando la tabla `movie_interactions`. Dado que la app no tiene login, se optó por un esquema con `session_id` y políticas RLS para acceso anónimo (`anon`).
+
+**Consecuencias Positivas:**
+*   Posibilidad de realizar analíticas sobre los gustos de los usuarios.
+*   Evolución natural hacia un sistema de cuentas de usuario (`auth.users`) sin migrar la DB básica.
+
+**Consecuencias Negativas:**
+*   Añade una dependencia externa obligatoria y latencia de red en las escrituras.
+*   El acceso anónimo exige una gestión cuidadosa de `session_id` en el cliente para evitar colisiones.
+
+---
+
 ## Próximas Decisiones Pendientes (Fase 2)
 
 A medida que el proyecto migre hacia sus iteraciones completas y finales, los siguientes ADRs deberán evaluarse y firmarse:
@@ -135,4 +177,4 @@ A medida que el proyecto migre hacia sus iteraciones completas y finales, los si
 1. **Orquestación de la UI:** Decisión sobre la unificación de las cartas en el componente central contenedor (`SwipeDeck.tsx`), lidiando con cómo enmascarar o cachear en base-64 imágenes pasadas antes de renderizarlas para que los usuarios no experimenten parpadeos de conexión mala (offline-ready).
 2. **Animaciones Fluidas Interactivas (Lista de Historial):** ¿Incorporar framer-motion o AutoAnimate solo para renderizar las transiciones de las películas que ya han entrado al historial (Lista lateral) o mantener el puro CSS?
 3. **Persistencia Avanzada:** Estudiar limitantes de memoria y saltar de la API `localStorage` cruda a una base temporal `IndexedDB` si el límite de 50 ítems en la cola de historial es expandido a ilimitado.
-4. **Mapeo Real de Metadatos de Autocompletado:** Cómo gestionar mapeos para los `genre_ids` sin machacar la carga de primer render con una solicitud forzada al server de configuraciones preestablecidas de TMDB. 
+4. **Mapeo Real de Metadatos de Autocompletado:** Cómo gestionar mapeos para los `genre_ids` sin machacar la carga de primer render con una solicitud forzada al server de configuraciones preestablecidas de TMDB.

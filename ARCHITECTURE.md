@@ -14,16 +14,16 @@ src/
 │   └── search/         # Componentes representacionales para filtros y búsqueda
 ├── context/
 │   ├── movies/         # Estado global (Context) y mutaciones (useReducer)
-│   └── theme/          # Estado de modo claro/oscuro (opcional)
 ├── hooks/
-│   ├── movies/         # Lógica de negocio separada de UI (useSwipe, useMovies)
+│   ├── movies/         # Lógica de negocio (useMovies, useTMDBCache, useMoviePagination)
 │   └── shared/         # Hooks genéricos (useDebounce)
-├── services/
-│   └── api/            # Abstracciones para llamadas HTTP (ej. fetch API)
+├── lib/
+│   └── supabase.ts     # Cliente de Supabase configurado
 ├── types/
-│   └── index.ts        # Interfaces globales compartidas (Movie, AppState)
-├── App.tsx             # Árbol principal, inyección de Proveedores (Context)
-└── main.tsx            # Punto de montaje principal de Vite
+│   ├── tmdb.types.ts   # Interfaces de la API de TMDB
+│   └── supabase.ts     # Tipos autogenerados de la DB
+├── App.tsx             # Árbol principal
+└── main.tsx            # Punto de montaje principal
 ```
 
 ## 2. Definición de Módulos y Responsabilidades
@@ -33,22 +33,25 @@ src/
 | `components/movies` | Renderizar tarjetas con Tailwind. Capturar gestos/swipes delegando la física y resolución a los Hooks. No maneja estados pesados. | `SwipeDeck.tsx`, `MovieCard.tsx` |
 | `components/search` | UI de filtros (genero, año) y barras de entrada. Envían la intención de interacción visual a los hooks. | `FilterBar.tsx` |
 | `context/movies` | Ser la fuente única de verdad para el sistema (Single Source of truth). Almacena el feed activo, lista de "Likes", "Dislikes". | `MovieContext.tsx`, `movieReducer.ts` |
-| `hooks/movies` | Aisla la lógica (Business Logic). `useSwipe` captura métricas y coordenadas, evaluando si es Right (Like) o Left (Dislike). Despacha al Context. | `useSwipe.ts`, `useMovies.ts` |
-| `services/api` | Exclusiva la comunicación hacia el Backend / API externa (ej. TMDB), devolviendo los datos tipados con sus interfaces de TypeScript. | `movieClient.ts` |
+| `hooks/movies` | **Separación de Responsabilidades (SRP)**: Divide la lógica en un Orquestador (`useMovies`), una capa de Caché (`useTMDBCache`) y un gestor de listas (`useMoviePagination`). | `useMovies.ts`, `useTMDBCache.ts` |
+| `lib/supabase.ts` | Gestión de la capa de datos externa. Configura el cliente para persistir interacciones (likes/dislikes). | `supabase.ts` |
 
 ## 3. Flujo de Datos Arquitectónico
 
 ```mermaid
 graph TD
-    User(("Usuario")) -->|"Interactúa (Swipe / Cambia Filtro)"| UI["Componentes UI"]
+    User(("Usuario")) -->|"Swipe / Filtro"| UI["UI (SwipeDeck)"]
     
-    UI -->|"Delega ejecución"| Hooks["Hooks: useSwipe / useMovies"]
+    subgraph Hooks [Capa de Negocio]
+        UI -->|"Delega"| Main["useMovies (Orquestador)"]
+        Main -->|"Consulta"| Cache["useTMDBCache (sessionStorage)"]
+        Main -->|"Actualiza"| Pagination["useMoviePagination (Lista de movies)"]
+        Main -->|"Fetch"| API["API TMDB"]
+    end
     
-    Hooks -->|"Pide nuevos datos de API"| API["Services / API HTTP"]
-    API -.->|"Retorna JSON/Model"| Hooks
+    UI -->|"Despacha Acción"| Context["MovieContext (Reducers)"]
+    Context -->|"Persiste (Futuro)"| Supabase[("Supabase DB")]
     
-    Hooks -->|"Despacha Acción (LIKE/DISLIKE/SET)"| Reducer["movieReducer"]
-    Reducer -->|"Calcula nuevo estado puro"| Context[("MovieContext")]
-    
-    Context -.->|"Inyecta el nuevo estado"| UI
+    API -.->|"Data"| Main
+    Main -.->|"Update"| UI
 ```

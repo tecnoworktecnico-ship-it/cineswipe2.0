@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { TMDBMovie, TMDBResponse } from '../../types/tmdb.types';
+import { TMDBResponse } from '../../types/tmdb.types';
 import { useTMDBCache } from './useTMDBCache';
 import { useMoviePagination } from './useMoviePagination';
 

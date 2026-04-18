@@ -13,6 +13,10 @@ Detalles visuales y de fluidez:
 - Estaría bueno poner un modal clarito de bienvenida explicando cómo se swipea para los que no cazan la onda de Tinder.
 - Sería un buen toque agregar transiciones de modo oscuro / claro al fondo.
 
+✅ Mejoras Implementadas (Sesión 6):
+- **Refactor de Arquitectura (SRP)**: El hook `useMovies` fue dividido en sub-hooks especializados (`useTMDBCache`, `useMoviePagination`) mejorando drásticamente la mantenibilidad.
+- **Persistencia en la Nube**: Se integró Supabase para guardar el historial de interacciones, permitiendo que la app deje de depender exclusivamente del `localStorage`.
+
 Deuda técnica a limpiar:
 - En SwipeDeck metimos un objeto con parche de tipos ("as any") que fue temporal porque las props de SwipeCard no cuadraban 100% con la respuesta de TMDB que devuelve ids numericos en vez de strings. Hay que arreglar bien esa interfaz.
 - El guardado en localStorage pasa a cada rato cuando swipeamos. Estaría bueno meterle un debounce de medio segundo para no golpear tanto al navegador.
