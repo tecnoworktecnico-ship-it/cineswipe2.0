@@ -14,6 +14,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      dislikes: {
+        Row: {
+          created_at: string | null
+          id: string
+          movie_id: number
+          poster_path: string | null
+          session_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movie_id: number
+          poster_path?: string | null
+          session_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movie_id?: number
+          poster_path?: string | null
+          session_id?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
+      likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          movie_id: number
+          poster_path: string | null
+          session_id: string | null
+          title: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          movie_id: number
+          poster_path?: string | null
+          session_id?: string | null
+          title?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          movie_id?: number
+          poster_path?: string | null
+          session_id?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       movie_interactions: {
         Row: {
           action: string | null
@@ -203,3 +257,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

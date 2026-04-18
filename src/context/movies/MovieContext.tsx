@@ -1,5 +1,6 @@
 import React, { createContext, useReducer, useEffect, useMemo, useContext } from 'react';
 import { TMDBMovie } from '../../types/tmdb.types';
+import { supabase } from '../../lib/supabase';
 
 // ==========================================
 // TIPOS E INTERFACES
@@ -23,6 +24,18 @@ export type MovieHistoryAction =
 
 const MAX_HISTORY_ITEMS = 50;
 const STORAGE_KEY = 'cineswipe_user_history';
+const SESSION_KEY = 'cineswipe_session_id';
+
+// Obtener o generar un session_id único para este navegador
+const getSessionId = (): string => {
+  if (typeof window === 'undefined') return '';
+  let sessionId = localStorage.getItem(SESSION_KEY);
+  if (!sessionId) {
+    sessionId = crypto.randomUUID();
+    localStorage.setItem(SESSION_KEY, sessionId);
+  }
+  return sessionId;
+};
 
 // ==========================================
 // ESTADO INICIAL Y REDUCER PURO
@@ -108,6 +121,43 @@ export const MovieHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
       console.error("Error guardando el historial:", err);
     }
   }, [state]);
+
+  // Efecto Secundario (Supabase): Sincronizamos con la nube en cada nueva interacción.
+  useEffect(() => {
+    const lastItem = state.history[0]; // El historial está ordenado con el más reciente primero
+    if (!lastItem) return;
+
+    // Evitar re-sincronizar elementos viejos si el efecto se dispara por otras razones
+    const isVeryRecent = Date.now() - lastItem.timestamp < 1000;
+    if (!isVeryRecent) return;
+
+    const syncWithSupabase = async () => {
+      try {
+        const tableName = lastItem.action === 'LIKE' ? 'likes' : 'dislikes';
+        
+        const { error } = await supabase
+          .from(tableName as any)
+          .insert([
+            {
+              movie_id: lastItem.movie.id,
+              title: lastItem.movie.title,
+              poster_path: lastItem.movie.poster_path,
+              session_id: getSessionId()
+            }
+          ]);
+
+        if (error) {
+          console.warn(`Error sincronizando con Supabase en la tabla ${tableName}:`, error.message);
+        } else {
+          console.log(`✅ Sincronizado exitosamente en la tabla ${tableName}`);
+        }
+      } catch (err) {
+        console.error('Error inesperado en sync Supabase:', err);
+      }
+    };
+
+    syncWithSupabase();
+  }, [state.history.length]); // Solo intentamos sincronizar si la longitud del historial cambia (nueva interacción)
 
   // Memoizar el valor del state para proteger componentes hijos de re-renderizados forzados
   const stateContextValue = useMemo(() => state, [state]);
