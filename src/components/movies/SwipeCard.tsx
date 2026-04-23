@@ -138,7 +138,7 @@ export const SwipeCard: React.FC<SwipeCardProps> = ({ movie, onSwipe }) => {
         alt={`Póster de la película: ${movie.title}`}
         className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         draggable={false}
-        {...({ fetchpriority: 'high' } as any)}
+        {...({ fetchPriority: 'high' } as React.ImgHTMLAttributes<HTMLImageElement>)}
       />
 
       {/* Gradiente Oscuro Reforzado (Accesibilidad/Contraste) */}

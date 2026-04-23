@@ -21,7 +21,7 @@ export const useTMDBCache = () => {
       }
       // Limpieza si el dato es antiguo
       sessionStorage.removeItem(key);
-    } catch (e) {
+    } catch {
       sessionStorage.removeItem(key);
     }
     return null;

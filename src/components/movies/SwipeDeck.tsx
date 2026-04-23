@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { SwipeCard } from './SwipeCard';
 import { useMovies } from '../../hooks/movies/useMovies';
-import { useMovieActions, useMovieHistory } from '../../context/movies/MovieContext';
+import { useMovieActions, useMovieHistory } from '../../hooks/movies/useMovieHistory';
 import { TMDBMovie } from '../../types/tmdb.types';
 
 // 1. Definimos un svg ultraligero que simula la tarjeta y evita LCP request discovery delays
@@ -36,7 +36,7 @@ export const SwipeDeck: React.FC = () => {
         // Guardar la URL del primer póster en localStorage para precargar en la próxima visita (LCP)
         if (updated.length > 0 && updated[0].poster_path) {
           const lcpUrl = `https://image.tmdb.org/t/p/w185${updated[0].poster_path}`;
-          try { localStorage.setItem('cs_lcp_poster', lcpUrl); } catch (_) {}
+          try { localStorage.setItem('cs_lcp_poster', lcpUrl); } catch { /* ignore quota errors */ }
         }
 
         return updated;
@@ -103,7 +103,7 @@ export const SwipeDeck: React.FC = () => {
             alt="Cargando película..."
             className="absolute inset-0 w-full h-full object-cover"
             // Force priority and decoding to bypass browser heuristics
-            {...({ fetchpriority: 'high', decoding: 'sync' } as any)}
+            {...({ fetchPriority: 'high', decoding: 'sync' } as React.ImgHTMLAttributes<HTMLImageElement>)}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-center animate-pulse">
@@ -164,14 +164,14 @@ export const SwipeDeck: React.FC = () => {
               {isTopCard ? (
                 <SwipeCard
                   movie={{
-                    ...movie,
                     id: movie.id.toString(),
+                    title: movie.title,
                     poster: movie.poster_path
                       ? `https://image.tmdb.org/t/p/w185${movie.poster_path}`
                       : 'https://via.placeholder.com/500x750?text=No+Poster',
                     rating: movie.vote_average,
                     year: parseInt(movie.release_date?.split('-')[0] || '0')
-                  } as any}
+                  }}
                   onSwipe={handleSwipe}
                 />
               ) : (

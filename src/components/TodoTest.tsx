@@ -20,8 +20,9 @@ export const TodoTest: React.FC = () => {
         if (error) throw error;
         
         setTodos(data || []);
-      } catch (err: any) {
-        setError(err.message || 'Error al conectar con Supabase');
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Error al conectar con Supabase';
+        setError(message);
         console.error('Supabase error:', err);
       } finally {
         setLoading(false);

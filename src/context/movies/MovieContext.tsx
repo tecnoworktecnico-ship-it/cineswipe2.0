@@ -1,4 +1,4 @@
-import React, { createContext, useReducer, useEffect, useMemo, useContext, useRef } from 'react';
+import React, { useReducer, useEffect, useMemo, useRef } from 'react';
 import { TMDBMovie } from '../../types/tmdb.types';
 import { supabase } from '../../lib/supabase';
 
@@ -99,12 +99,7 @@ function movieHistoryReducer(state: MovieHistoryState, action: MovieHistoryActio
   }
 }
 
-// ==========================================
-// SEPARACIÓN DE CONTEXTOS (Lectura vs Escritura)
-// ==========================================
-
-const MovieHistoryStateContext = createContext<MovieHistoryState | undefined>(undefined);
-const MovieHistoryDispatchContext = createContext<React.Dispatch<MovieHistoryAction> | undefined>(undefined);
+import { MovieHistoryStateContext, MovieHistoryDispatchContext } from './MovieHistoryContext';
 
 // ==========================================
 // PROVIDER COMPONENT
@@ -136,7 +131,7 @@ export const MovieHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const tableName = lastItem.action === 'LIKE' ? 'likes' : 'dislikes';
         
         const { error } = await supabase
-          .from(tableName as any)
+          .from(tableName as 'likes' | 'dislikes')
           .insert([
             {
               movie_id: lastItem.movie.id,
@@ -172,28 +167,4 @@ export const MovieHistoryProvider: React.FC<{ children: React.ReactNode }> = ({ 
   );
 };
 
-// ==========================================
-// CUSTOM HOOKS DE CONSUMO
-// ==========================================
 
-/**
- * Hook para leer la lista histórica (solo lectura).
- */
-export const useMovieHistory = () => {
-  const context = useContext(MovieHistoryStateContext);
-  if (context === undefined) {
-    throw new Error('useMovieHistory debe ser utilizado dentro de un MovieHistoryProvider');
-  }
-  return context;
-};
-
-/**
- * Hook estricto para despachar eventos (no triggerea renders al leer estado).
- */
-export const useMovieActions = () => {
-  const context = useContext(MovieHistoryDispatchContext);
-  if (context === undefined) {
-    throw new Error('useMovieActions debe ser utilizado dentro de un MovieHistoryProvider');
-  }
-  return context;
-};

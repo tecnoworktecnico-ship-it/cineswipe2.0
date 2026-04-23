@@ -75,9 +75,10 @@ export const useMovies = (options?: UseMoviesOptions) => {
       let data: TMDBResponse | null = null;
 
       // Optimización LCP: Interceptar prefetch si existe
-      if (currentPage === 1 && !options?.genre && !options?.year && (window as any).__TMDB_PREFETCH__) {
-        data = await (window as any).__TMDB_PREFETCH__;
-        delete (window as any).__TMDB_PREFETCH__;
+      const win = window as unknown as Window & { __TMDB_PREFETCH__?: Promise<TMDBResponse> };
+      if (currentPage === 1 && !options?.genre && !options?.year && win.__TMDB_PREFETCH__) {
+        data = await win.__TMDB_PREFETCH__;
+        delete win.__TMDB_PREFETCH__;
       }
 
       if (!data) {
@@ -103,9 +104,11 @@ export const useMovies = (options?: UseMoviesOptions) => {
         }
       }
 
-    } catch (err: any) {
-      if (err.name !== 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name !== 'AbortError') {
         setError(err.message || 'Error Desconocido');
+      } else if (!(err instanceof Error)) {
+        setError('Error Desconocido');
       }
     } finally {
       // Solo apagar loading si esta petición es la última activa
@@ -113,7 +116,7 @@ export const useMovies = (options?: UseMoviesOptions) => {
         setLoading(false);
       }
     }
-  }, [options?.genre, options?.year, getCache, setCache, addResults, resetPagination]);
+  }, [options, getCache, setCache, addResults, resetPagination]);
 
   // Observer de inicialización y cambios de filtros
   useEffect(() => {
