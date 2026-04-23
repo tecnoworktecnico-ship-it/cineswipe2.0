@@ -10,6 +10,9 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  VITE_SUPABASE_URL: https://placeholder-project.supabase.co
+  VITE_SUPABASE_ANON_KEY: placeholder-key-for-tests
+  VITE_TMDB_KEY: dummy-key-for-static-build
 
 jobs:
   # Job 1: Linting - Valida la consistencia del código y reglas de equipo
@@ -69,6 +72,8 @@ jobs:
   build:
     needs: test # Solo corre si los tests pasan
     runs-on: ubuntu-latest
+    env:
+      VITE_TMDB_KEY: ${{ secrets.VITE_TMDB_KEY }}
     steps:
       - uses: actions/checkout@v4
       
