@@ -10,8 +10,6 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  VITE_SUPABASE_URL: https://dummy-url.supabase.co
-  VITE_SUPABASE_ANON_KEY: dummy-anon-key-for-ci-tests
 
 jobs:
   # Job 1: Linting - Valida la consistencia del código y reglas de equipo
@@ -44,7 +42,9 @@ jobs:
     needs: lint # Solo corre si el lint pasa
     runs-on: ubuntu-latest
     env:
-      VITE_TMDB_KEY: ${{ secrets.VITE_TMDB_KEY }} # Necesario si los tests llaman a la API o usan la key
+      VITE_TMDB_KEY: ${{ secrets.VITE_TMDB_KEY }}
+      VITE_SUPABASE_URL: https://placeholder-project.supabase.co
+      VITE_SUPABASE_ANON_KEY: placeholder-key-for-tests
     steps:
       - uses: actions/checkout@v4
       
